@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/admpub/bindata"
+	"github.com/admpub/bindata/v3"
 )
 
 func main() {

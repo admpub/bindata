@@ -1,4 +1,4 @@
-module github.com/admpub/bindata
+module github.com/admpub/bindata/v3
 
 go 1.13
 

@@ -3,7 +3,7 @@ name: default
 
 workspace:
   base: /go
-  path: github.com/go-bindata/go-bindata
+  path: github.com/admpub/bindata
 steps:
 - name: build
   image: golang:1.12
