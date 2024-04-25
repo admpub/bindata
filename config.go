@@ -106,6 +106,8 @@ type Config struct {
 	// the file data when called. Defaults to false.
 	NoCompress bool
 
+	CompressLevel int
+
 	// NoUnpack means the assets are /not/ uncompressed before being turned
 	// into Go code of compress option enabled. Defaults to false.
 	NoUnpack bool

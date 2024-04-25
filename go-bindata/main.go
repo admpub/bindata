@@ -47,6 +47,7 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
 	flag.BoolVar(&c.NoMemCopy, "nomemcopy", c.NoMemCopy, "Use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.NoCompress, "nocompress", c.NoCompress, "Assets will *not* be GZIP compressed when this flag is specified.")
+	flag.IntVar(&c.CompressLevel, "compresslevel", c.CompressLevel, "GZIP compress level")
 	flag.BoolVar(&c.NoUnpack, "nounpack", c.NoUnpack, "Assets will *not* be uncompressed when this flag is specified.")
 	flag.BoolVar(&c.NoMetadata, "nometadata", c.NoMetadata, "Assets will not preserve size, mode, and modtime info.")
 	flag.BoolVar(&c.HttpFileSystem, "fs", c.HttpFileSystem, "Whether generate instance http.FileSystem interface code.")
@@ -98,9 +99,9 @@ func parseArgs() *bindata.Config {
 // parseRecursive determines whether the given path has a recursive indicator and
 // returns a new path with the recursive indicator chopped off if it does.
 //
-//  ex:
-//      /path/to/foo/...    -> (/path/to/foo, true)
-//      /path/to/bar        -> (/path/to/bar, false)
+//	ex:
+//	    /path/to/foo/...    -> (/path/to/foo, true)
+//	    /path/to/bar        -> (/path/to/bar, false)
 func parseInput(path string) bindata.InputConfig {
 	if strings.HasSuffix(path, "/...") {
 		return bindata.InputConfig{

@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"unicode/utf8"
 )
@@ -77,10 +76,16 @@ func writeReleaseAsset(w io.Writer, c *Config, asset *Asset) error {
 			err = uncompressed_memcopy(w, asset, fd)
 		}
 	} else {
+		compressLevel := c.CompressLevel
+		if compressLevel <= 0 {
+			compressLevel = gzip.DefaultCompression
+		} else if compressLevel > gzip.BestCompression {
+			compressLevel = gzip.BestCompression
+		}
 		if c.NoMemCopy {
-			err = compressed_nomemcopy(w, asset, fd)
+			err = compressed_nomemcopy(w, asset, fd, compressLevel)
 		} else {
-			err = compressed_memcopy(w, asset, fd)
+			err = compressed_memcopy(w, asset, fd, compressLevel)
 		}
 	}
 	if err != nil {
@@ -110,7 +115,6 @@ func header_compressed_nomemcopy(w io.Writer, c *Config) error {
 	"bytes"
 	"fmt"
 	"net/http"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -119,7 +123,6 @@ func header_compressed_nomemcopy(w io.Writer, c *Config) error {
 		header = `import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -187,7 +190,6 @@ func header_compressed_memcopy(w io.Writer, c *Config) error {
 	"bytes"
 	"fmt"
 	"net/http"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -196,7 +198,6 @@ func header_compressed_memcopy(w io.Writer, c *Config) error {
 		header = `import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -254,7 +255,6 @@ func header_uncompressed_nomemcopy(w io.Writer, c *Config) error {
 	"bytes"
 	"fmt"
 	"net/http"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -264,7 +264,6 @@ func header_uncompressed_nomemcopy(w io.Writer, c *Config) error {
 	} else {
 		header = `import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -299,7 +298,6 @@ func header_uncompressed_memcopy(w io.Writer, c *Config) error {
 	"bytes"
 	"fmt"
 	"net/http"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -307,7 +305,6 @@ func header_uncompressed_memcopy(w io.Writer, c *Config) error {
 	} else {
 		header = `import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -367,13 +364,16 @@ func (fi bindataFileInfo) Sys() interface{} {
 	return err
 }
 
-func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
+func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader, compressLevel int) error {
 	_, err := fmt.Fprintf(w, `var _%s = "`, asset.Func)
 	if err != nil {
 		return err
 	}
 
-	gz := gzip.NewWriter(&StringWriter{Writer: w})
+	gz, err := gzip.NewWriterLevel(&StringWriter{Writer: w}, compressLevel)
+	if err != nil {
+		return err
+	}
 	_, err = io.Copy(gz, r)
 	gz.Close()
 
@@ -394,13 +394,16 @@ func %sBytes() ([]byte, error) {
 	return err
 }
 
-func compressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
+func compressed_memcopy(w io.Writer, asset *Asset, r io.Reader, compressLevel int) error {
 	_, err := fmt.Fprintf(w, `var _%s = []byte("`, asset.Func)
 	if err != nil {
 		return err
 	}
 
-	gz := gzip.NewWriter(&StringWriter{Writer: w})
+	gz, err := gzip.NewWriterLevel(&StringWriter{Writer: w}, compressLevel)
+	if err != nil {
+		return err
+	}
 	_, err = io.Copy(gz, r)
 	gz.Close()
 
@@ -451,7 +454,7 @@ func uncompressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
 		return err
 	}
 
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}
